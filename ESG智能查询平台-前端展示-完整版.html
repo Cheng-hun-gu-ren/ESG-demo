@@ -1,0 +1,1803 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ESG智能监测查询平台</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.4.3/echarts.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        /* 顶部导航栏 */
+        .navbar {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+            padding: 15px 0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .nav-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #2a5298;
+            cursor: pointer;
+        }
+
+        .nav-menu {
+            display: flex;
+            gap: 30px;
+        }
+
+        .nav-item {
+            color: #333;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .nav-item:hover, .nav-item.active {
+            background: linear-gradient(45deg, #2a5298, #1e3c72);
+            color: white;
+        }
+
+        .nav-item.admin-only {
+            position: relative;
+        }
+
+        .nav-item.admin-only:hover {
+            background: linear-gradient(45deg, #dc3545, #c82333);
+            color: white;
+        }
+
+        /* 页面内容容器 */
+        .main-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .page-content {
+            display: none;
+        }
+
+        .page-content.active {
+            display: block;
+        }
+
+        /* AI智能问答区域 */
+        .ai-chat-section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .ai-title {
+            text-align: center;
+            font-size: 1.5em;
+            color: #2a5298;
+            margin-bottom: 20px;
+        }
+
+        .chat-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .chat-input-group {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 15px 20px;
+            border: 2px solid #e1e8ed;
+            border-radius: 25px;
+            font-size: 1.1em;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .chat-input:focus {
+            border-color: #2a5298;
+            box-shadow: 0 0 0 3px rgba(42, 82, 152, 0.1);
+        }
+
+        .chat-submit {
+            padding: 15px 30px;
+            background: linear-gradient(45deg, #2a5298, #1e3c72);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1.1em;
+            transition: transform 0.3s ease;
+        }
+
+        .chat-submit:hover {
+            transform: translateY(-2px);
+        }
+
+        /* AI回答展示 */
+        .ai-response {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-top: 20px;
+        }
+
+        .response-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .source-links {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .source-link {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 5px 12px;
+            border-radius: 15px;
+            text-decoration: none;
+            margin: 5px 5px 5px 0;
+            font-size: 0.9em;
+            transition: background 0.3s ease;
+            cursor: pointer;
+        }
+
+        .source-link:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        /* 仪表盘概览 */
+        .dashboard-section, .analysis-section, .reports-section, .admin-section {
+            margin: 30px 0;
+        }
+
+        .section-title {
+            color: white;
+            font-size: 1.8em;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .dashboard-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .dashboard-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .dashboard-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card-icon {
+            font-size: 2.5em;
+            margin-bottom: 15px;
+            color: #2a5298;
+        }
+
+        .card-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #2a5298;
+            margin-bottom: 10px;
+        }
+
+        .card-label {
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        /* 主要功能区域 */
+        .main-content {
+            display: grid;
+            grid-template-columns: 300px 1fr 350px;
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        /* 左侧筛选面板 */
+        .filter-panel {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            height: fit-content;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .filter-title {
+            font-size: 1.3em;
+            color: #2a5298;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .filter-group {
+            margin-bottom: 25px;
+        }
+
+        .filter-group h4 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        .filter-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .filter-tag {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.9em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .filter-tag.active {
+            background: #2a5298;
+            color: white;
+            border-color: #2a5298;
+        }
+
+        .filter-tag:hover {
+            background: #e9ecef;
+        }
+
+        .filter-tag.active:hover {
+            background: #1e3c72;
+        }
+
+        /* 中央数据展示区 */
+        .data-display {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .data-title {
+            font-size: 1.4em;
+            color: #2a5298;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        /* 数据表格 */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 12px 8px;
+            text-align: left;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .data-table th {
+            background: linear-gradient(45deg, #2a5298, #1e3c72);
+            color: white;
+            font-weight: 600;
+            font-size: 0.9em;
+            cursor: pointer;
+        }
+
+        .data-table th:hover {
+            background: linear-gradient(45deg, #1e3c72, #2a5298);
+        }
+
+        .data-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .esg-score {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
+            color: white;
+            font-weight: 600;
+            font-size: 0.9em;
+        }
+
+        .score-high { background: #28a745; }
+        .score-medium { background: #ffc107; color: #333; }
+        .score-low { background: #dc3545; }
+
+        /* 右侧可视化面板 */
+        .visualization-panel {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .viz-title {
+            font-size: 1.3em;
+            color: #2a5298;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .chart-container {
+            height: 300px;
+            margin-bottom: 30px;
+        }
+
+        /* 示例问题 */
+        .example-questions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .example-q {
+            background: rgba(42, 82, 152, 0.1);
+            color: #2a5298;
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.3s ease;
+        }
+
+        .example-q:hover {
+            background: rgba(42, 82, 152, 0.2);
+        }
+
+        /* 模态框 */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: 15px;
+            width: 80%;
+            max-width: 800px;
+            position: relative;
+        }
+
+        .close {
+            position: absolute;
+            right: 15px;
+            top: 15px;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            color: #aaa;
+        }
+
+        .close:hover {
+            color: black;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 1200px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .filter-panel {
+                order: 3;
+            }
+            
+            .visualization-panel {
+                order: 2;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .nav-menu {
+                display: none;
+            }
+            
+            .chat-input-group {
+                flex-direction: column;
+            }
+            
+            .dashboard-cards {
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.8s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <!-- 顶部导航栏 -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo" onclick="showPage('query')">
+                <i class="fas fa-chart-line"></i>
+                ESG智能监测平台
+            </div>
+            <div class="nav-menu">
+                <div class="nav-item active" onclick="showPage('query')"><i class="fas fa-search"></i> 智能查询</div>
+                <div class="nav-item" onclick="showPage('analysis')"><i class="fas fa-chart-bar"></i> 数据分析</div>
+                <div class="nav-item" onclick="showPage('reports')"><i class="fas fa-file-alt"></i> 报告中心</div>
+                <div class="nav-item" onclick="showPage('introduction')"><i class="fas fa-info-circle"></i> 平台介绍</div>
+                <div class="nav-item admin-only" onclick="showPage('admin')" style="color: #dc3545;"><i class="fas fa-cog"></i> 系统管理 <span style="font-size:0.8em;">(管理员)</span></div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="main-container">
+        <!-- 智能查询页面 -->
+        <div id="page-query" class="page-content active">
+            <!-- AI智能问答区域 -->
+            <section class="ai-chat-section">
+                <div class="ai-title">
+                    <i class="fas fa-robot"></i> ESG智能分析助手
+                </div>
+                <div class="chat-container">
+                    <div class="chat-input-group">
+                        <input type="text" class="chat-input" id="chatInput" 
+                               placeholder="请输入您想了解的ESG问题，例如：2023年碳减排表现最好的银行有哪些？" 
+                               value="2023年碳减排表现最好的5家银行是哪些？">
+                        <button class="chat-submit" onclick="simulateAIResponse()">
+                            <i class="fas fa-paper-plane"></i> 提问
+                        </button>
+                    </div>
+                    
+                    <div class="example-questions">
+                        <div class="example-q" onclick="setQuestion(this, '碳减排')">2023年碳减排表现最好的5家银行是哪些？</div>
+                        <div class="example-q" onclick="setQuestion(this, 'ESG评级')">哪些银行的ESG评级最高？</div>
+                        <div class="example-q" onclick="setQuestion(this, '绿色贷款')">绿色贷款占比最大的银行</div>
+                        <div class="example-q" onclick="setQuestion(this, '华东地区')">华东地区银行ESG表现对比</div>
+                    </div>
+
+                    <div class="ai-response" id="aiResponse">
+                        <div class="response-header">
+                            <i class="fas fa-robot"></i>
+                            <strong>AI智能分析结果</strong>
+                        </div>
+                        <div class="response-content">
+                            根据2023年度ESG数据分析，碳减排表现最好的5家银行如下：
+                            <br><br>
+                            <strong>前五名银行：</strong><br>
+                            1. <strong>兴业银行</strong> - 碳减排贷款余额3,420亿元，年减排CO₂当量1,280万吨<br>
+                            2. <strong>中国银行</strong> - 碳减排贷款余额2,890亿元，年减排CO₂当量1,150万吨<br>
+                            3. <strong>建设银行</strong> - 碳减排贷款余额2,650亿元，年减排CO₂当量1,020万吨<br>
+                            4. <strong>工商银行</strong> - 碳减排贷款余额2,480亿元，年减排CO₂当量950万吨<br>
+                            5. <strong>招商银行</strong> - 碳减排贷款余额1,890亿元，年减排CO₂当量720万吨
+                            <br><br>
+                            这些银行在清洁能源、节能环保、碳减排技术等领域投放了大量绿色信贷资金，有效支持了国家双碳目标的实现。
+                        </div>
+                        <div class="source-links">
+                            <strong>数据来源：</strong>
+                            <div class="source-link" onclick="showReportModal('兴业银行2023年环境信息披露报告')">兴业银行2023年环境信息披露报告</div>
+                            <div class="source-link" onclick="showReportModal('中国银行2023年绿色金融报告')">中国银行2023年绿色金融报告</div>
+                            <div class="source-link" onclick="showReportModal('建设银行2023年社会责任报告')">建设银行2023年社会责任报告</div>
+                            <div class="source-link" onclick="showReportModal('工商银行2023年ESG报告')">工商银行2023年ESG报告</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 仪表盘概览 -->
+            <section class="dashboard-section">
+                <h2 class="section-title">ESG数据概览</h2>
+                <div class="dashboard-cards">
+                    <div class="dashboard-card">
+                        <div class="card-icon">
+                            <i class="fas fa-building"></i>
+                        </div>
+                        <div class="card-value">156</div>
+                        <div class="card-label">监测银行数量</div>
+                    </div>
+                    <div class="dashboard-card">
+                        <div class="card-icon">
+                            <i class="fas fa-leaf"></i>
+                        </div>
+                        <div class="card-value">28.5万亿</div>
+                        <div class="card-label">绿色贷款总余额</div>
+                    </div>
+                    <div class="dashboard-card">
+                        <div class="card-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <div class="card-value">82.3%</div>
+                        <div class="card-label">ESG披露覆盖率</div>
+                    </div>
+                    <div class="dashboard-card">
+                        <div class="card-icon">
+                            <i class="fas fa-recycle"></i>
+                        </div>
+                        <div class="card-value">7,250</div>
+                        <div class="card-label">年减排CO₂(万吨)</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 主要功能区域 -->
+            <div class="main-content">
+                <!-- 左侧筛选面板 -->
+                <div class="filter-panel">
+                    <h3 class="filter-title">
+                        <i class="fas fa-filter"></i> 数据筛选
+                    </h3>
+                    
+                    <div class="filter-group">
+                        <h4><i class="fas fa-map-marker-alt"></i> 地区</h4>
+                        <div class="filter-options">
+                            <div class="filter-tag active" onclick="selectFilter(this)">全国</div>
+                            <div class="filter-tag" onclick="selectFilter(this)">华东</div>
+                            <div class="filter-tag" onclick="selectFilter(this)">华北</div>
+                            <div class="filter-tag" onclick="selectFilter(this)">华南</div>
+                            <div class="filter-tag" onclick="selectFilter(this)">华中</div>
+                        </div>
+                    </div>
+
+                    <div class="filter-group">
+                        <h4><i class="fas fa-calendar"></i> 时间范围</h4>
+                        <div class="filter-options">
+                            <div class="filter-tag active" onclick="selectFilter(this)">2024年</div>
+                            <div class="filter-tag" onclick="selectFilter(this)">2023年</div>
+                            <div class="filter-tag" onclick="selectFilter(this)">2022年</div>
+                            <div class="filter-tag" onclick="selectFilter(this)">近三年</div>
+                        </div>
+                    </div>
+
+                    <div class="filter-group">
+                        <h4><i class="fas fa-chart-bar"></i> ESG维度</h4>
+                        <div class="filter-options">
+                            <div class="filter-tag active" onclick="selectFilter(this)">综合ESG</div>
+                            <div class="filter-tag" onclick="selectFilter(this)">环境(E)</div>
+                            <div class="filter-tag" onclick="selectFilter(this)">社会(S)</div>
+                            <div class="filter-tag" onclick="selectFilter(this)">治理(G)</div>
+                        </div>
+                    </div>
+
+                    <div class="filter-group">
+                        <h4><i class="fas fa-building"></i> 银行类型</h4>
+                        <div class="filter-options">
+                            <div class="filter-tag active" onclick="selectFilter(this)">全部</div>
+                            <div class="filter-tag" onclick="selectFilter(this)">国有大行</div>
+                            <div class="filter-tag" onclick="selectFilter(this)">股份制</div>
+                            <div class="filter-tag" onclick="selectFilter(this)">城商行</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 中央数据展示区 -->
+                <div class="data-display">
+                    <h3 class="data-title">银行ESG表现排行榜</h3>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th onclick="sortTable(0)">排名 <i class="fas fa-sort"></i></th>
+                                <th onclick="sortTable(1)">银行名称 <i class="fas fa-sort"></i></th>
+                                <th onclick="sortTable(2)">ESG评分 <i class="fas fa-sort"></i></th>
+                                <th onclick="sortTable(3)">绿色贷款(亿元) <i class="fas fa-sort"></i></th>
+                                <th onclick="sortTable(4)">碳减排(万吨CO₂) <i class="fas fa-sort"></i></th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dataTableBody">
+                            <tr onclick="showBankDetail('兴业银行')">
+                                <td><strong>1</strong></td>
+                                <td>兴业银行</td>
+                                <td><span class="esg-score score-high">A+</span></td>
+                                <td>3,420</td>
+                                <td>1,280</td>
+                                <td><div class="source-link" onclick="showBankDetail('兴业银行')">查看详情</div></td>
+                            </tr>
+                            <tr onclick="showBankDetail('中国银行')">
+                                <td><strong>2</strong></td>
+                                <td>中国银行</td>
+                                <td><span class="esg-score score-high">A+</span></td>
+                                <td>2,890</td>
+                                <td>1,150</td>
+                                <td><div class="source-link" onclick="showBankDetail('中国银行')">查看详情</div></td>
+                            </tr>
+                            <tr onclick="showBankDetail('建设银行')">
+                                <td><strong>3</strong></td>
+                                <td>建设银行</td>
+                                <td><span class="esg-score score-high">A</span></td>
+                                <td>2,650</td>
+                                <td>1,020</td>
+                                <td><div class="source-link" onclick="showBankDetail('建设银行')">查看详情</div></td>
+                            </tr>
+                            <tr onclick="showBankDetail('工商银行')">
+                                <td><strong>4</strong></td>
+                                <td>工商银行</td>
+                                <td><span class="esg-score score-high">A</span></td>
+                                <td>2,480</td>
+                                <td>950</td>
+                                <td><div class="source-link" onclick="showBankDetail('工商银行')">查看详情</div></td>
+                            </tr>
+                            <tr onclick="showBankDetail('招商银行')">
+                                <td><strong>5</strong></td>
+                                <td>招商银行</td>
+                                <td><span class="esg-score score-high">A</span></td>
+                                <td>1,890</td>
+                                <td>720</td>
+                                <td><div class="source-link" onclick="showBankDetail('招商银行')">查看详情</div></td>
+                            </tr>
+                            <tr onclick="showBankDetail('浦发银行')">
+                                <td><strong>6</strong></td>
+                                <td>浦发银行</td>
+                                <td><span class="esg-score score-medium">B+</span></td>
+                                <td>1,650</td>
+                                <td>580</td>
+                                <td><div class="source-link" onclick="showBankDetail('浦发银行')">查看详情</div></td>
+                            </tr>
+                            <tr onclick="showBankDetail('民生银行')">
+                                <td><strong>7</strong></td>
+                                <td>民生银行</td>
+                                <td><span class="esg-score score-medium">B+</span></td>
+                                <td>1,420</td>
+                                <td>485</td>
+                                <td><div class="source-link" onclick="showBankDetail('民生银行')">查看详情</div></td>
+                            </tr>
+                            <tr onclick="showBankDetail('光大银行')">
+                                <td><strong>8</strong></td>
+                                <td>光大银行</td>
+                                <td><span class="esg-score score-medium">B</span></td>
+                                <td>1,280</td>
+                                <td>420</td>
+                                <td><div class="source-link" onclick="showBankDetail('光大银行')">查看详情</div></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- 右侧可视化面板 -->
+                <div class="visualization-panel">
+                    <h3 class="viz-title">
+                        <i class="fas fa-chart-pie"></i> 数据可视化
+                    </h3>
+                    
+                    <div class="chart-container" id="trendChart"></div>
+                    <div class="chart-container" id="categoryChart"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 数据分析页面 -->
+        <div id="page-analysis" class="page-content">
+            <section class="analysis-section">
+                <h2 class="section-title">ESG数据分析中心</h2>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px;">
+                    <div class="dashboard-card">
+                        <h3>地域分布分析</h3>
+                        <div id="mapChart" style="height: 350px;"></div>
+                    </div>
+                    <div class="dashboard-card">
+                        <h3>行业对比分析</h3>
+                        <div id="industryChart" style="height: 350px;"></div>
+                    </div>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+                    <div class="dashboard-card">
+                        <h3>ESG评分分布</h3>
+                        <div id="distributionChart" style="height: 300px;"></div>
+                    </div>
+                    <div class="dashboard-card">
+                        <h3>年度趋势分析</h3>
+                        <div id="trendAnalysisChart" style="height: 300px;"></div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- 报告中心页面 -->
+        <div id="page-reports" class="page-content">
+            <section class="reports-section">
+                <h2 class="section-title">报告生成中心</h2>
+                <div style="display: grid; grid-template-columns: 300px 1fr; gap: 30px;">
+                    <!-- 报告配置面板 -->
+                    <div class="filter-panel">
+                        <h3 class="filter-title"><i class="fas fa-cog"></i> 报告配置</h3>
+                        
+                        <div class="filter-group">
+                            <h4>报告类型</h4>
+                            <div class="filter-options" style="flex-direction: column;">
+                                <div class="filter-tag active" onclick="selectReportType(this, 'comprehensive')" style="margin-bottom: 5px; width: 100%; text-align: center;">综合分析报告</div>
+                                <div class="filter-tag" onclick="selectReportType(this, 'ranking')" style="margin-bottom: 5px; width: 100%; text-align: center;">排名对比报告</div>
+                                <div class="filter-tag" onclick="selectReportType(this, 'trend')" style="margin-bottom: 5px; width: 100%; text-align: center;">趋势分析报告</div>
+                                <div class="filter-tag" onclick="selectReportType(this, 'custom')" style="width: 100%; text-align: center;">自定义报告</div>
+                            </div>
+                        </div>
+
+                        <div class="filter-group">
+                            <h4>银行选择</h4>
+                            <div style="margin-bottom: 10px;">
+                                <input type="text" placeholder="搜索银行..." style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px;">
+                            </div>
+                            <div class="bank-selection" style="max-height: 200px; overflow-y: auto; border: 1px solid #ddd; border-radius: 5px; padding: 10px; background: #f9f9f9;">
+                                <label style="display: block; margin-bottom: 8px;"><input type="checkbox" checked style="margin-right: 8px;"> 兴业银行</label>
+                                <label style="display: block; margin-bottom: 8px;"><input type="checkbox" checked style="margin-right: 8px;"> 中国银行</label>
+                                <label style="display: block; margin-bottom: 8px;"><input type="checkbox" style="margin-right: 8px;"> 建设银行</label>
+                                <label style="display: block; margin-bottom: 8px;"><input type="checkbox" style="margin-right: 8px;"> 工商银行</label>
+                                <label style="display: block; margin-bottom: 8px;"><input type="checkbox" style="margin-right: 8px;"> 招商银行</label>
+                                <label style="display: block; margin-bottom: 8px;"><input type="checkbox" style="margin-right: 8px;"> 浦发银行</label>
+                                <label style="display: block;"><input type="checkbox" style="margin-right: 8px;"> 民生银行</label>
+                            </div>
+                        </div>
+
+                        <div class="filter-group">
+                            <h4>时间范围</h4>
+                            <select style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px; margin-bottom: 10px;">
+                                <option value="2024">2024年</option>
+                                <option value="2023" selected>2023年</option>
+                                <option value="2022">2022年</option>
+                                <option value="range">自定义范围</option>
+                            </select>
+                        </div>
+
+                        <button class="chat-submit" onclick="generateReport()" style="width: 100%; margin-top: 20px;">
+                            <i class="fas fa-file-pdf"></i> 生成报告
+                        </button>
+                        
+                        <!-- 原始PDF查询按钮 -->
+                        <button class="chat-submit" onclick="showOriginalPdfQuery()" style="width: 100%; margin-top: 10px; background: linear-gradient(45deg, #28a745, #20c997);">
+                            <i class="fas fa-file-pdf"></i> 原始PDF查询
+                        </button>
+                        
+                        <!-- 反馈提交按钮 -->
+                        <button class="chat-submit" onclick="showFeedbackForm()" style="width: 100%; margin-top: 10px; background: linear-gradient(45deg, #ffc107, #fd7e14);">
+                            <i class="fas fa-comment"></i> 反馈提交
+                        </button>
+                    </div>
+
+                    <!-- 报告预览区域 -->
+                    <div class="data-display">
+                        <h3 class="data-title">报告预览</h3>
+                        <div id="reportPreview" style="min-height: 500px; border: 1px solid #ddd; border-radius: 10px; padding: 20px; background: #f9f9f9;">
+                            <div style="text-align: center; padding: 100px 0; color: #666;">
+                                <i class="fas fa-file-alt" style="font-size: 4em; margin-bottom: 20px; display: block;"></i>
+                                <p>选择报告配置后，点击"生成报告"查看预览</p>
+                            </div>
+                        </div>
+                        <div style="text-align: center; margin-top: 20px;">
+                            <button class="filter-tag" onclick="downloadReport('pdf')" style="margin: 0 10px; padding: 10px 20px;">
+                                <i class="fas fa-download"></i> 下载PDF
+                            </button>
+                            <button class="filter-tag" onclick="downloadReport('excel')" style="margin: 0 10px; padding: 10px 20px;">
+                                <i class="fas fa-download"></i> 下载Excel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- 平台介绍页面 -->
+        <div id="page-introduction" class="page-content">
+            <section class="analysis-section">
+                <h2 class="section-title">ESG智能监测平台介绍</h2>
+                
+                <!-- 平台概述 -->
+                <div class="dashboard-card" style="margin-bottom: 30px;">
+                    <h3 style="color: #2a5298; margin-bottom: 20px;"><i class="fas fa-bullseye"></i> 平台概述</h3>
+                    <p style="line-height: 1.8; color: #555;">ESG智能监测平台是一个专业的环境、社会、治理数据分析平台，专注于银行业ESG表现的监测、分析和评估。平台通过AI技术和大数据分析，为金融机构、投资者、监管部门和研究机构提供准确、及时、全面的ESG数据服务。</p>
+                </div>
+                
+                <!-- 工作原理 -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px;">
+                    <div class="dashboard-card">
+                        <h3 style="color: #2a5298; margin-bottom: 20px;"><i class="fas fa-cogs"></i> 工作原理</h3>
+                        <div style="line-height: 1.8; color: #555;">
+                            <h4 style="color: #28a745; margin: 15px 0 10px 0;">1. 数据采集</h4>
+                            <p>• 自动采集银行公开披露的ESG报告、年报、社会责任报告</p>
+                            <p>• 实时监控监管机构发布的相关数据</p>
+                            <p>• 收集第三方评级机构的ESG评估报告</p>
+                            
+                            <h4 style="color: #28a745; margin: 15px 0 10px 0;">2. 数据处理</h4>
+                            <p>• 使用NLP技术解析非结构化文本数据</p>
+                            <p>• 建立统一的ESG指标体系和评估标准</p>
+                            <p>• 数据清洗、验证和标准化处理</p>
+                            
+                            <h4 style="color: #28a745; margin: 15px 0 10px 0;">3. 智能分析</h4>
+                            <p>• AI模型进行ESG风险识别和趋势预测</p>
+                            <p>• 多维度对比分析和排名评估</p>
+                            <p>• 生成专业的分析报告和可视化图表</p>
+                        </div>
+                    </div>
+                    
+                    <div class="dashboard-card">
+                        <h3 style="color: #2a5298; margin-bottom: 20px;"><i class="fas fa-shield-alt"></i> 合法合规性</h3>
+                        <div style="line-height: 1.8; color: #555;">
+                            <h4 style="color: #17a2b8; margin: 15px 0 10px 0;">数据来源合规</h4>
+                            <p>• 所有数据均来自公开披露渠道</p>
+                            <p>• 严格遵循信息公开透明原则</p>
+                            <p>• 不涉及任何内幕信息或商业秘密</p>
+                            
+                            <h4 style="color: #17a2b8; margin: 15px 0 10px 0;">数据处理规范</h4>
+                            <p>• 符合《数据安全法》相关要求</p>
+                            <p>• 建立完善的数据治理体系</p>
+                            <p>• 定期进行合规性审查和评估</p>
+                            
+                            <h4 style="color: #17a2b8; margin: 15px 0 10px 0;">信息使用合理</h4>
+                            <p>• 仅用于ESG研究和分析目的</p>
+                            <p>• 保护银行商业信息和声誉</p>
+                            <p>• 提供客观、中性的分析结果</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 核心功能 -->
+                <div class="dashboard-card" style="margin-bottom: 30px;">
+                    <h3 style="color: #2a5298; margin-bottom: 20px;"><i class="fas fa-star"></i> 核心功能特色</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+                        <div style="padding: 20px; background: #f8f9fa; border-radius: 10px; border-left: 4px solid #28a745;">
+                            <h4 style="color: #28a745; margin-bottom: 10px;">AI智能问答</h4>
+                            <p style="color: #555;">基于大语言模型的智能ESG问答系统，支持自然语言查询，快速获取精准分析结果</p>
+                        </div>
+                        <div style="padding: 20px; background: #f8f9fa; border-radius: 10px; border-left: 4px solid #17a2b8;">
+                            <h4 style="color: #17a2b8; margin-bottom: 10px;">多维度分析</h4>
+                            <p style="color: #555;">从环境、社会、治理三个维度进行全面评估，支持地区、行业、时间等多角度对比</p>
+                        </div>
+                        <div style="padding: 20px; background: #f8f9fa; border-radius: 10px; border-left: 4px solid #ffc107;">
+                            <h4 style="color: #fd7e14; margin-bottom: 10px;">数据可视化</h4>
+                            <p style="color: #555;">丰富的图表展示方式，包括趋势图、对比图、分布图等，直观呈现ESG表现</p>
+                        </div>
+                        <div style="padding: 20px; background: #f8f9fa; border-radius: 10px; border-left: 4px solid #6f42c1;">
+                            <h4 style="color: #6f42c1; margin-bottom: 10px;">报告生成</h4>
+                            <p style="color: #555;">一键生成专业ESG分析报告，支持PDF、Excel等多种格式导出</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 服务对象 -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+                    <div class="dashboard-card">
+                        <h3 style="color: #2a5298; margin-bottom: 20px;"><i class="fas fa-users"></i> 服务对象</h3>
+                        <div style="line-height: 1.8; color: #555;">
+                            <p><i class="fas fa-building" style="color: #28a745; margin-right: 8px;"></i><strong>金融机构：</strong>银行ESG管理部门、风险管理部门</p>
+                            <p><i class="fas fa-chart-line" style="color: #17a2b8; margin-right: 8px;"></i><strong>投资机构：</strong>ESG投资基金、资产管理公司</p>
+                            <p><i class="fas fa-university" style="color: #ffc107; margin-right: 8px;"></i><strong>监管部门：</strong>银保监会、人民银行相关部门</p>
+                            <p><i class="fas fa-graduation-cap" style="color: #6f42c1; margin-right: 8px;"></i><strong>研究机构：</strong>高校研究所、智库机构</p>
+                            <p><i class="fas fa-newspaper" style="color: #dc3545; margin-right: 8px;"></i><strong>媒体机构：</strong>财经媒体、行业分析师</p>
+                        </div>
+                    </div>
+                    
+                    <div class="dashboard-card">
+                        <h3 style="color: #2a5298; margin-bottom: 20px;"><i class="fas fa-phone"></i> 联系我们</h3>
+                        <div style="line-height: 1.8; color: #555;">
+                            <p><i class="fas fa-envelope" style="color: #dc3545; margin-right: 8px;"></i><strong>邮箱：</strong>contact@esg-platform.com</p>
+                            <p><i class="fas fa-phone" style="color: #28a745; margin-right: 8px;"></i><strong>电话：</strong>400-888-9999</p>
+                            <p><i class="fas fa-map-marker-alt" style="color: #17a2b8; margin-right: 8px;"></i><strong>地址：</strong>北京市朝阳区金融街88号</p>
+                            <p><i class="fas fa-globe" style="color: #6f42c1; margin-right: 8px;"></i><strong>网站：</strong>www.esg-platform.com</p>
+                            <div style="margin-top: 20px; padding: 15px; background: #e8f5e8; border-radius: 8px;">
+                                <p style="margin: 0; color: #28a745; font-weight: 500;"><i class="fas fa-clock"></i> 工作时间：周一至周五 9:00-18:00</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- 系统管理页面 -->
+        <div id="page-admin" class="page-content">
+            <section class="admin-section">
+                <h2 class="section-title">系统管理中心</h2>
+                <div class="dashboard-cards">
+                    <div class="dashboard-card">
+                        <div class="card-icon"><i class="fas fa-database"></i></div>
+                        <div class="card-value">2,156</div>
+                        <div class="card-label">报告总数</div>
+                        <button class="filter-tag" onclick="showDataManagement()" style="margin-top: 15px;">管理数据</button>
+                    </div>
+                    <div class="dashboard-card">
+                        <div class="card-icon"><i class="fas fa-users"></i></div>
+                        <div class="card-value">68</div>
+                        <div class="card-label">活跃用户</div>
+                        <button class="filter-tag" onclick="showUserManagement()" style="margin-top: 15px;">用户管理</button>
+                    </div>
+                    <div class="dashboard-card">
+                        <div class="card-icon"><i class="fas fa-chart-line"></i></div>
+                        <div class="card-value">99.2%</div>
+                        <div class="card-label">系统运行率</div>
+                        <button class="filter-tag" onclick="showSystemMonitor()" style="margin-top: 15px;">系统监控</button>
+                    </div>
+                    <div class="dashboard-card">
+                        <div class="card-icon"><i class="fas fa-sync-alt"></i></div>
+                        <div class="card-value">每日</div>
+                        <div class="card-label">数据更新频率</div>
+                        <button class="filter-tag" onclick="showUpdateSettings()" style="margin-top: 15px;">更新设置</button>
+                    </div>
+                </div>
+
+                <div style="margin-top: 40px;">
+                    <div class="data-display">
+                        <h3 class="data-title">系统运行状态</h3>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+                            <div style="text-align: center; padding: 20px; background: #e8f5e8; border-radius: 10px;">
+                                <i class="fas fa-check-circle" style="font-size: 2em; color: #28a745; margin-bottom: 10px;"></i>
+                                <h4>数据采集系统</h4>
+                                <p style="color: #28a745; margin-top: 5px;">运行正常</p>
+                            </div>
+                            <div style="text-align: center; padding: 20px; background: #e8f5e8; border-radius: 10px;">
+                                <i class="fas fa-check-circle" style="font-size: 2em; color: #28a745; margin-bottom: 10px;"></i>
+                                <h4>解析系统</h4>
+                                <p style="color: #28a745; margin-top: 5px;">运行正常</p>
+                            </div>
+                            <div style="text-align: center; padding: 20px; background: #fff3cd; border-radius: 10px;">
+                                <i class="fas fa-exclamation-triangle" style="font-size: 2em; color: #ffc107; margin-bottom: 10px;"></i>
+                                <h4>AI问答服务</h4>
+                                <p style="color: #856404; margin-top: 5px;">负载较高</p>
+                            </div>
+                            <div style="text-align: center; padding: 20px; background: #e8f5e8; border-radius: 10px;">
+                                <i class="fas fa-check-circle" style="font-size: 2em; color: #28a745; margin-bottom: 10px;"></i>
+                                <h4>数据库</h4>
+                                <p style="color: #28a745; margin-top: 5px;">运行正常</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <!-- 模态框 -->
+    <div id="reportModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('reportModal')">&times;</span>
+            <h2 id="modalTitle">报告详情</h2>
+            <div id="modalContent">
+                <p>正在加载报告内容...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 原始PDF查询模态框 -->
+    <div id="pdfQueryModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('pdfQueryModal')">&times;</span>
+            <h2>原始PDF报告查询与下载</h2>
+            <div style="margin: 20px 0;">
+                <div class="filter-group" style="margin-bottom: 20px;">
+                    <h4>银行名称</h4>
+                    <select id="pdfBankSelect" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                        <option value="">请选择银行</option>
+                        <option value="兴业银行">兴业银行</option>
+                        <option value="中国银行">中国银行</option>
+                        <option value="建设银行">建设银行</option>
+                        <option value="工商银行">工商银行</option>
+                        <option value="招商银行">招商银行</option>
+                        <option value="浦发银行">浦发银行</option>
+                        <option value="民生银行">民生银行</option>
+                        <option value="光大银行">光大银行</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group" style="margin-bottom: 20px;">
+                    <h4>年份</h4>
+                    <select id="pdfYearSelect" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                        <option value="">请选择年份</option>
+                        <option value="2024">2024年</option>
+                        <option value="2023">2023年</option>
+                        <option value="2022">2022年</option>
+                        <option value="2021">2021年</option>
+                        <option value="2020">2020年</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group" style="margin-bottom: 20px;">
+                    <h4>报告类型</h4>
+                    <select id="pdfTypeSelect" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                        <option value="">请选择报告类型</option>
+                        <option value="ESG报告">ESG报告</option>
+                        <option value="社会责任报告">社会责任报告</option>
+                        <option value="环境信息披露报告">环境信息披露报告</option>
+                        <option value="绿色金融报告">绿色金融报告</option>
+                        <option value="年度报告">年度报告</option>
+                        <option value="半年度报告">半年度报告</option>
+                    </select>
+                </div>
+                
+                <div style="text-align: center; margin-top: 30px;">
+                    <button class="chat-submit" onclick="searchOriginalPdf()" style="margin-right: 10px;">
+                        <i class="fas fa-search"></i> 查询报告
+                    </button>
+                    <button class="filter-tag" onclick="clearPdfForm()" style="padding: 12px 20px;">
+                        <i class="fas fa-refresh"></i> 重置
+                    </button>
+                </div>
+                
+                <div id="pdfSearchResults" style="margin-top: 30px; display: none;">
+                    <h4>查询结果</h4>
+                    <div id="pdfResultsContent"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 反馈提交模态框 -->
+    <div id="feedbackModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('feedbackModal')">&times;</span>
+            <h2>反馈提交</h2>
+            <div style="margin: 20px 0;">
+                <p style="color: #666; margin-bottom: 20px;">如果您查询的报告未找到或遇到其他问题，请填写以下信息，我们会尽快处理并反馈给您。</p>
+                
+                <div class="filter-group" style="margin-bottom: 20px;">
+                    <h4>银行名称 <span style="color: #dc3545;">*</span></h4>
+                    <input type="text" id="feedbackBank" placeholder="请输入银行名称" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                </div>
+                
+                <div class="filter-group" style="margin-bottom: 20px;">
+                    <h4>年份 <span style="color: #dc3545;">*</span></h4>
+                    <input type="text" id="feedbackYear" placeholder="请输入年份，如2023" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                </div>
+                
+                <div class="filter-group" style="margin-bottom: 20px;">
+                    <h4>报告类型 <span style="color: #dc3545;">*</span></h4>
+                    <input type="text" id="feedbackReportType" placeholder="请输入报告类型，如ESG报告、社会责任报告等" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                </div>
+                
+                <div class="filter-group" style="margin-bottom: 20px;">
+                    <h4>问题描述 <span style="color: #dc3545;">*</span></h4>
+                    <textarea id="feedbackDescription" placeholder="请详细描述您遇到的问题或需求" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; height: 80px; resize: vertical;"></textarea>
+                </div>
+                
+                <div class="filter-group" style="margin-bottom: 20px;">
+                    <h4>联系方式</h4>
+                    <input type="email" id="feedbackContact" placeholder="请输入您的邮箱地址（选填）" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                    <p style="color: #666; font-size: 0.9em; margin-top: 5px;">提供联系方式有助于我们更快地为您解决问题</p>
+                </div>
+                
+                <div style="text-align: center; margin-top: 30px;">
+                    <button class="chat-submit" onclick="submitFeedback()" style="margin-right: 10px;">
+                        <i class="fas fa-paper-plane"></i> 提交反馈
+                    </button>
+                    <button class="filter-tag" onclick="clearFeedbackForm()" style="padding: 12px 20px;">
+                        <i class="fas fa-refresh"></i> 清空表单
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 页面切换功能
+        function showPage(pageId) {
+            // 隐藏所有页面
+            document.querySelectorAll('.page-content').forEach(page => {
+                page.classList.remove('active');
+            });
+            
+            // 显示选中页面
+            document.getElementById('page-' + pageId).classList.add('active');
+            
+            // 更新导航状态
+            document.querySelectorAll('.nav-item').forEach(nav => {
+                nav.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // 根据页面初始化图表
+            if (pageId === 'query') {
+                setTimeout(initQueryCharts, 100);
+            } else if (pageId === 'analysis') {
+                setTimeout(initAnalysisCharts, 100);
+            }
+        }
+
+        // AI回答内容库
+        const aiResponses = {
+            '碳减排': {
+                title: '2023年碳减排表现最佳银行分析',
+                content: `根据2023年度ESG数据分析，碳减排表现最好的5家银行如下：
+                    <br><br>
+                    <strong>前五名银行：</strong><br>
+                    1. <strong>兴业银行</strong> - 碳减排贷款余额3,420亿元，年减排CO₂当量1,280万吨<br>
+                    2. <strong>中国银行</strong> - 碳减排贷款余额2,890亿元，年减排CO₂当量1,150万吨<br>
+                    3. <strong>建设银行</strong> - 碳减排贷款余额2,650亿元，年减排CO₂当量1,020万吨<br>
+                    4. <strong>工商银行</strong> - 碳减排贷款余额2,480亿元，年减排CO₂当量950万吨<br>
+                    5. <strong>招商银行</strong> - 碳减排贷款余额1,890亿元，年减排CO₂当量720万吨
+                    <br><br>
+                    这些银行在清洁能源、节能环保、碳减排技术等领域投放了大量绿色信贷资金，有效支持了国家双碳目标的实现。`,
+                sources: ['兴业银行2023年环境信息披露报告', '中国银行2023年绿色金融报告', '建设银行2023年社会责任报告', '工商银行2023年ESG报告']
+            },
+            'ESG评级': {
+                title: 'ESG评级最高银行综合分析',
+                content: `基于2024年最新ESG评级数据，评级最高的银行排名如下：
+                    <br><br>
+                    <strong>A+级银行（最高级）：</strong><br>
+                    1. <strong>兴业银行</strong> - ESG综合评分92分，在环境、社会、治理三个维度均表现优异<br>
+                    2. <strong>中国银行</strong> - ESG综合评分90分，国际化ESG实践经验丰富<br>
+                    3. <strong>招商银行</strong> - ESG综合评分89分，金融科技与ESG融合度高<br>
+                    <br>
+                    <strong>A级银行：</strong><br>
+                    4. <strong>建设银行</strong> - ESG综合评分87分，基础设施绿色金融领域领先<br>
+                    5. <strong>工商银行</strong> - ESG综合评分85分，规模优势下的ESG实践<br>
+                    <br>
+                    这些银行在ESG治理体系、信息披露透明度、环境风险管理等方面表现突出。`,
+                sources: ['ESG评级机构综合报告2024', '银行业ESG表现白皮书', '中国银行业协会ESG指引', '监管机构ESG评估报告']
+            },
+            '绿色贷款': {
+                title: '绿色贷款占比领先银行分析',
+                content: `根据2024年绿色金融统计数据，绿色贷款占比最大的银行如下：
+                    <br><br>
+                    <strong>绿色贷款占比排名：</strong><br>
+                    1. <strong>兴业银行</strong> - 绿色贷款占比18.5%，余额达1.2万亿元<br>
+                    2. <strong>浦发银行</strong> - 绿色贷款占比15.8%，专业化绿色金融服务体系完善<br>
+                    3. <strong>中国银行</strong> - 绿色贷款占比14.2%，"一带一路"绿色投融资优势明显<br>
+                    4. <strong>建设银行</strong> - 绿色贷款占比13.7%，住建领域绿色项目融资领先<br>
+                    5. <strong>招商银行</strong> - 绿色贷款占比12.9%，零售绿色金融产品创新活跃<br>
+                    <br>
+                    <strong>重点投向领域：</strong>清洁能源、节能环保、清洁交通、绿色建筑等。`,
+                sources: ['央行绿色金融统计报告', '银保监会绿色信贷统计', '各银行绿色金融年度报告', '绿色金融改革试验区数据']
+            },
+            '华东地区': {
+                title: '华东地区银行ESG表现对比分析',
+                content: `华东地区作为经济发达区域，银行ESG表现总体领先全国平均水平：
+                    <br><br>
+                    <strong>华东地区银行ESG表现前十：</strong><br>
+                    1. <strong>兴业银行</strong>（福建）- ESG评分92分，绿色金融先行者<br>
+                    2. <strong>招商银行</strong>（广东深圳）- ESG评分89分，科技赋能ESG<br>
+                    3. <strong>浦发银行</strong>（上海）- ESG评分86分，长三角一体化绿色金融<br>
+                    4. <strong>宁波银行</strong>（浙江）- ESG评分82分，中小企业绿色转型支持<br>
+                    5. <strong>南京银行</strong>（江苏）- ESG评分80分，区域可持续发展贡献突出<br>
+                    <br>
+                    <strong>区域特色：</strong><br>
+                    • 长三角一体化绿色金融合作深入<br>
+                    • 制造业绿色转型金融服务创新<br>
+                    • 海洋经济绿色发展金融支持完善<br>
+                    • 数字化ESG管理水平全国领先`,
+                sources: ['华东地区银行业ESG发展报告', '长三角绿色金融一体化报告', '区域银行ESG实践案例集', '地方监管局ESG监测数据']
+            }
+        };
+
+        // 模拟AI回答
+        function simulateAIResponse() {
+            const input = document.getElementById('chatInput');
+            const response = document.getElementById('aiResponse');
+            const question = input.value;
+            
+            // 模拟加载状态
+            response.innerHTML = `
+                <div class="response-header">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <strong>AI正在分析中...</strong>
+                </div>
+            `;
+            
+            // 2秒后显示结果
+            setTimeout(() => {
+                let responseData = aiResponses['碳减排']; // 默认回答
+                
+                // 根据问题内容选择回答
+                for (let key in aiResponses) {
+                    if (question.includes(key)) {
+                        responseData = aiResponses[key];
+                        break;
+                    }
+                }
+                
+                let sourcesHtml = '';
+                responseData.sources.forEach(source => {
+                    sourcesHtml += `<div class="source-link" onclick="showReportModal('${source}')">${source}</div>`;
+                });
+                
+                response.innerHTML = `
+                    <div class="response-header">
+                        <i class="fas fa-robot"></i>
+                        <strong>AI智能分析结果</strong>
+                    </div>
+                    <div class="response-content">
+                        ${responseData.content}
+                    </div>
+                    <div class="source-links">
+                        <strong>数据来源：</strong>
+                        ${sourcesHtml}
+                    </div>
+                `;
+            }, 2000);
+        }
+
+        // 设置示例问题
+        function setQuestion(element, type) {
+            document.getElementById('chatInput').value = element.textContent;
+            simulateAIResponse();
+        }
+
+        // 筛选功能
+        function selectFilter(element) {
+            // 移除同组的active状态
+            element.parentNode.querySelectorAll('.filter-tag').forEach(t => t.classList.remove('active'));
+            // 添加当前的active状态
+            element.classList.add('active');
+            
+            // 模拟数据更新
+            console.log('筛选条件已更新：', element.textContent);
+        }
+
+        // 表格排序功能
+        function sortTable(columnIndex) {
+            const table = document.getElementById('dataTableBody');
+            const rows = Array.from(table.rows);
+            const isAscending = !table.getAttribute('data-sort-asc');
+            
+            rows.sort((a, b) => {
+                let aVal = a.cells[columnIndex].textContent.trim();
+                let bVal = b.cells[columnIndex].textContent.trim();
+                
+                // 数字排序
+                if (!isNaN(aVal) && !isNaN(bVal)) {
+                    return isAscending ? aVal - bVal : bVal - aVal;
+                }
+                
+                // 文本排序
+                return isAscending ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+            });
+            
+            // 重新插入排序后的行
+            rows.forEach(row => table.appendChild(row));
+            
+            // 更新排序状态
+            table.setAttribute('data-sort-asc', isAscending);
+            
+            // 更新表头图标
+            document.querySelectorAll('.data-table th i').forEach(icon => {
+                icon.className = 'fas fa-sort';
+            });
+            document.querySelectorAll('.data-table th')[columnIndex].querySelector('i').className = 
+                isAscending ? 'fas fa-sort-up' : 'fas fa-sort-down';
+        }
+
+        // 银行详情查看
+        function showBankDetail(bankName) {
+            const modal = document.getElementById('reportModal');
+            const title = document.getElementById('modalTitle');
+            const content = document.getElementById('modalContent');
+            
+            title.textContent = bankName + ' - ESG详细信息';
+            content.innerHTML = `
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin: 20px 0;">
+                    <div style="text-align: center; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                        <h4>ESG总评分</h4>
+                        <div style="font-size: 2em; color: #28a745; font-weight: bold;">92</div>
+                    </div>
+                    <div style="text-align: center; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                        <h4>环境(E)评分</h4>
+                        <div style="font-size: 2em; color: #17a2b8; font-weight: bold;">94</div>
+                    </div>
+                    <div style="text-align: center; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                        <h4>社会(S)评分</h4>
+                        <div style="font-size: 2em; color: #ffc107; font-weight: bold;">89</div>
+                    </div>
+                    <div style="text-align: center; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                        <h4>治理(G)评分</h4>
+                        <div style="font-size: 2em; color: #6f42c1; font-weight: bold;">91</div>
+                    </div>
+                </div>
+                <div style="margin: 20px 0;">
+                    <h4>关键ESG指标：</h4>
+                    <ul style="margin: 10px 0 0 20px; line-height: 1.8;">
+                        <li><strong>绿色贷款余额：</strong>12,500亿元</li>
+                        <li><strong>碳减排量：</strong>1,280万吨CO₂当量</li>
+                        <li><strong>社会责任投入：</strong>15.6亿元</li>
+                        <li><strong>员工满意度：</strong>94.2%</li>
+                        <li><strong>客户投诉处理率：</strong>99.8%</li>
+                        <li><strong>董事会独立性：</strong>符合监管要求</li>
+                    </ul>
+                </div>
+                <div style="margin: 20px 0;">
+                    <h4>相关报告：</h4>
+                    <div style="margin: 10px 0;">
+                        <div class="source-link" style="display: inline-block; margin: 5px;">${bankName}2024年ESG报告</div>
+                        <div class="source-link" style="display: inline-block; margin: 5px;">${bankName}2024年社会责任报告</div>
+                        <div class="source-link" style="display: inline-block; margin: 5px;">${bankName}2024年环境信息披露</div>
+                    </div>
+                </div>
+            `;
+            modal.style.display = 'block';
+        }
+
+        // 报告模态框
+        function showReportModal(reportName) {
+            const modal = document.getElementById('reportModal');
+            const title = document.getElementById('modalTitle');
+            const content = document.getElementById('modalContent');
+            
+            title.textContent = reportName;
+            content.innerHTML = `
+                <div style="border: 1px solid #ddd; padding: 20px; border-radius: 8px; background: #f9f9f9; margin: 15px 0;">
+                    <h4>报告基本信息</h4>
+                    <p><strong>报告名称：</strong>${reportName}</p>
+                    <p><strong>发布时间：</strong>2024年3月</p>
+                    <p><strong>页数：</strong>156页</p>
+                    <p><strong>文件大小：</strong>12.5MB</p>
+                    <p><strong>报告类型：</strong>ESG信息披露</p>
+                </div>
+                <div style="margin: 20px 0;">
+                    <h4>报告摘要</h4>
+                    <p style="line-height: 1.6; color: #555;">
+                        本报告详细披露了2023年度在环境、社会、治理方面的实践与成果。
+                        报告涵盖绿色金融发展、碳减排目标实现、社会责任履行、公司治理完善等核心内容。
+                        数据经第三方机构验证，符合国际ESG披露标准。
+                    </p>
+                </div>
+                <div style="text-align: center; margin-top: 30px;">
+                    <button class="chat-submit" onclick="downloadReport('pdf')" style="margin: 0 10px;">
+                        <i class="fas fa-download"></i> 下载PDF
+                    </button>
+                    <button class="chat-submit" onclick="viewOnline()" style="margin: 0 10px;">
+                        <i class="fas fa-eye"></i> 在线查看
+                    </button>
+                </div>
+            `;
+            modal.style.display = 'block';
+        }
+
+        // 关闭模态框
+        function closeModal(modalId = 'reportModal') {
+            if (modalId) {
+                document.getElementById(modalId).style.display = 'none';
+            } else {
+                document.getElementById('reportModal').style.display = 'none';
+            }
+        }
+
+        // 报告类型选择
+        function selectReportType(element, type) {
+            element.parentNode.querySelectorAll('.filter-tag').forEach(t => t.classList.remove('active'));
+            element.classList.add('active');
+            console.log('选择报告类型：', type);
+        }
+
+        // 生成报告
+        function generateReport() {
+            const preview = document.getElementById('reportPreview');
+            preview.innerHTML = `
+                <div style="text-align: center; padding: 20px 0;">
+                    <i class="fas fa-spinner fa-spin" style="font-size: 3em; color: #2a5298; margin-bottom: 20px;"></i>
+                    <p>正在生成报告...</p>
+                </div>
+            `;
+            
+            setTimeout(() => {
+                preview.innerHTML = `
+                    <div style="border: 1px solid #ddd; padding: 20px; background: white; border-radius: 8px;">
+                        <h3 style="text-align: center; color: #2a5298; border-bottom: 2px solid #2a5298; padding-bottom: 10px; margin-bottom: 20px;">
+                            ESG综合分析报告
+                        </h3>
+                        <div style="margin: 20px 0;">
+                            <h4>报告概述</h4>
+                            <p>本报告基于选定银行的2023年ESG数据，提供综合性分析和评估。</p>
+                        </div>
+                        <div style="margin: 20px 0;">
+                            <h4>主要发现</h4>
+                            <ul style="margin-left: 20px; line-height: 1.6;">
+                                <li>兴业银行在绿色金融领域持续领先，碳减排贷款余额达到3,420亿元</li>
+                                <li>中国银行国际化ESG实践经验丰富，海外绿色项目投资活跃</li>
+                                <li>总体而言，选定银行ESG表现均高于行业平均水平</li>
+                            </ul>
+                        </div>
+                        <div style="margin: 20px 0;">
+                            <h4>建议</h4>
+                            <ul style="margin-left: 20px; line-height: 1.6;">
+                                <li>继续加大绿色金融产品创新力度</li>
+                                <li>完善ESG风险管理体系</li>
+                                <li>提高ESG信息披露透明度</li>
+                            </ul>
+                        </div>
+                        <div style="text-align: right; margin-top: 30px; color: #666; font-size: 0.9em;">
+                            报告生成时间：${new Date().toLocaleString()}
+                        </div>
+                    </div>
+                `;
+            }, 2000);
+        }
+
+        // 下载报告
+        function downloadReport(format) {
+            alert(`开始下载 ${format.toUpperCase()} 格式报告...`);
+        }
+
+        // 在线查看
+        function viewOnline() {
+            alert('正在打开在线查看窗口...');
+        }
+
+        // 系统管理功能
+        function showDataManagement() {
+            alert('打开数据管理界面...');
+        }
+
+        function showUserManagement() {
+            alert('打开用户管理界面...');
+        }
+
+        function showSystemMonitor() {
+            alert('打开系统监控界面...');
+        }
+
+        function showUpdateSettings() {
+            alert('打开更新设置界面...');
+        }
+
+        // 初始化查询页面图表
+        function initQueryCharts() {
+            // 趋势图
+            const trendChart = echarts.init(document.getElementById('trendChart'));
+            const trendOption = {
+                title: {
+                    text: 'ESG评分趋势',
+                    left: 'center',
+                    textStyle: { fontSize: 14 }
+                },
+                tooltip: { trigger: 'axis' },
+                legend: {
+                    data: ['兴业银行', '中国银行', '建设银行'],
+                    bottom: 0
+                },
+                xAxis: {
+                    type: 'category',
+                    data: ['2020', '2021', '2022', '2023', '2024']
+                },
+                yAxis: { type: 'value', min: 60, max: 100 },
+                series: [{
+                    name: '兴业银行',
+                    type: 'line',
+                    data: [75, 78, 82, 87, 92],
+                    smooth: true
+                }, {
+                    name: '中国银行',
+                    type: 'line',
+                    data: [72, 76, 80, 85, 90],
+                    smooth: true
+                }, {
+                    name: '建设银行',
+                    type: 'line',
+                    data: [70, 74, 78, 83, 88],
+                    smooth: true
+                }]
+            };
+            trendChart.setOption(trendOption);
+
+            // 分类图
+            const categoryChart = echarts.init(document.getElementById('categoryChart'));
+            const categoryOption = {
+                title: {
+                    text: 'ESG维度分布',
+                    left: 'center',
+                    textStyle: { fontSize: 14 }
+                },
+                tooltip: { trigger: 'item' },
+                series: [{
+                    type: 'pie',
+                    radius: '65%',
+                    data: [
+                        { value: 35, name: '环境(E)' },
+                        { value: 30, name: '社会(S)' },
+                        { value: 35, name: '治理(G)' }
+                    ],
+                    emphasis: {
+                        itemStyle: {
+                            shadowBlur: 10,
+                            shadowOffsetX: 0,
+                            shadowColor: 'rgba(0, 0, 0, 0.5)'
+                        }
+                    }
+                }]
+            };
+            categoryChart.setOption(categoryOption);
+
+            // 响应式处理
+            window.addEventListener('resize', function() {
+                trendChart.resize();
+                categoryChart.resize();
+            });
+        }
+
+        // 初始化分析页面图表
+        function initAnalysisCharts() {
+            // 地域分布图表
+            const mapChart = echarts.init(document.getElementById('mapChart'));
+            const mapOption = {
+                title: { text: '银行地域分布', left: 'center' },
+                tooltip: { trigger: 'item' },
+                series: [{
+                    type: 'pie',
+                    radius: ['40%', '70%'],
+                    data: [
+                        { value: 35, name: '华东地区' },
+                        { value: 25, name: '华北地区' },
+                        { value: 20, name: '华南地区' },
+                        { value: 12, name: '华中地区' },
+                        { value: 8, name: '其他地区' }
+                    ]
+                }]
+            };
+            mapChart.setOption(mapOption);
+
+            // 行业对比图表
+            const industryChart = echarts.init(document.getElementById('industryChart'));
+            const industryOption = {
+                title: { text: '银行类型ESG评分对比', left: 'center' },
+                tooltip: { trigger: 'axis' },
+                xAxis: {
+                    type: 'category',
+                    data: ['国有大行', '股份制', '城商行', '农商行']
+                },
+                yAxis: { type: 'value', min: 60, max: 100 },
+                series: [{
+                    type: 'bar',
+                    data: [88, 85, 78, 72],
+                    itemStyle: {
+                        color: '#2a5298'
+                    }
+                }]
+            };
+            industryChart.setOption(industryOption);
+
+            // ESG评分分布
+            const distributionChart = echarts.init(document.getElementById('distributionChart'));
+            const distributionOption = {
+                title: { text: 'ESG评分分布', left: 'center' },
+                tooltip: { trigger: 'axis' },
+                xAxis: {
+                    type: 'category',
+                    data: ['A+', 'A', 'B+', 'B', 'C+', 'C']
+                },
+                yAxis: { type: 'value' },
+                series: [{
+                    type: 'bar',
+                    data: [15, 28, 35, 42, 25, 11],
+                    itemStyle: {
+                        color: function(params) {
+                            const colors = ['#28a745', '#6ba545', '#ffc107', '#fd7e14', '#dc3545', '#6c757d'];
+                            return colors[params.dataIndex];
+                        }
+                    }
+                }]
+            };
+            distributionChart.setOption(distributionOption);
+
+            // 年度趋势分析
+            const trendAnalysisChart = echarts.init(document.getElementById('trendAnalysisChart'));
+            const trendAnalysisOption = {
+                title: { text: '行业ESG平均分趋势', left: 'center' },
+                tooltip: { trigger: 'axis' },
+                xAxis: {
+                    type: 'category',
+                    data: ['2020', '2021', '2022', '2023', '2024']
+                },
+                yAxis: { type: 'value', min: 65, max: 85 },
+                series: [{
+                    type: 'line',
+                    data: [68, 71, 74, 78, 82],
+                    smooth: true,
+                    itemStyle: { color: '#2a5298' },
+                    areaStyle: { opacity: 0.3 }
+                }]
+            };
+            trendAnalysisChart.setOption(trendAnalysisOption);
+        }
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            initQueryCharts();
+        });
+
+        // 回车键提交
+        document.getElementById('chatInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                simulateAIResponse();
+            }
+        });
+
+        // 显示原始PDF查询模态框
+        function showOriginalPdfQuery() {
+            document.getElementById('pdfQueryModal').style.display = 'block';
+        }
+
+        // 显示反馈提交模态框
+        function showFeedbackForm() {
+            document.getElementById('feedbackModal').style.display = 'block';
+        }
+
+        // 搜索原始PDF报告
+        function searchOriginalPdf() {
+            const bank = document.getElementById('pdfBankSelect').value;
+            const year = document.getElementById('pdfYearSelect').value;
+            const type = document.getElementById('pdfTypeSelect').value;
+            
+            if (!bank || !year || !type) {
+                alert('请填写完整的查询条件！');
+                return;
+            }
+            
+            const resultsDiv = document.getElementById('pdfSearchResults');
+            const contentDiv = document.getElementById('pdfResultsContent');
+            
+            // 显示加载状态
+            contentDiv.innerHTML = '<div style="text-align: center; padding: 20px;"><i class="fas fa-spinner fa-spin" style="font-size: 2em; color: #2a5298;"></i><p>正在搜索报告...</p></div>';
+            resultsDiv.style.display = 'block';
+            
+            // 模拟搜索结果
+            setTimeout(() => {
+                // 模拟有时找到，有时找不到
+                const found = Math.random() > 0.3;
+                
+                if (found) {
+                    contentDiv.innerHTML = `
+                        <div style="border: 1px solid #28a745; background: #d4edda; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                            <h4 style="color: #28a745; margin-bottom: 10px;"><i class="fas fa-check-circle"></i> 找到匹配报告</h4>
+                            <p><strong>报告名称：</strong>${bank}${year}年${type}</p>
+                            <p><strong>文件大小：</strong>8.5MB</p>
+                            <p><strong>发布时间：</strong>${year}年3月15日</p>
+                            <p><strong>页数：</strong>124页</p>
+                            <div style="margin-top: 15px;">
+                                <button class="chat-submit" onclick="downloadOriginalPdf('${bank}', '${year}', '${type}')" style="margin-right: 10px;">
+                                    <i class="fas fa-download"></i> 下载PDF
+                                </button>
+                                <button class="filter-tag" onclick="previewOriginalPdf('${bank}', '${year}', '${type}')" style="padding: 10px 15px;">
+                                    <i class="fas fa-eye"></i> 在线预览
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    contentDiv.innerHTML = `
+                        <div style="border: 1px solid #ffc107; background: #fff3cd; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                            <h4 style="color: #856404; margin-bottom: 10px;"><i class="fas fa-exclamation-triangle"></i> 未找到相关报告</h4>
+                            <p>很抱歉，未找到 <strong>${bank}</strong> ${year}年的 <strong>${type}</strong></p>
+                            <p>可能的原因：</p>
+                            <ul style="margin: 10px 0 10px 20px;">
+                                <li>该银行该年度未发布此类报告</li>
+                                <li>报告尚未收录到我们的数据库中</li>
+                                <li>报告名称或分类有所不同</li>
+                            </ul>
+                            <div style="margin-top: 15px;">
+                                <button class="chat-submit" onclick="closeModal('pdfQueryModal'); showFeedbackForm();" style="background: linear-gradient(45deg, #ffc107, #fd7e14);">
+                                    <i class="fas fa-comment"></i> 提交反馈请求
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }
+            }, 1500);
+        }
+
+        // 下载原始PDF
+        function downloadOriginalPdf(bank, year, type) {
+            alert(`开始下载《${bank}${year}年${type}》...`);
+        }
+
+        // 预览原始PDF
+        function previewOriginalPdf(bank, year, type) {
+            alert(`正在打开《${bank}${year}年${type}》在线预览窗口...`);
+        }
+
+        // 清空PDF查询表单
+        function clearPdfForm() {
+            document.getElementById('pdfBankSelect').value = '';
+            document.getElementById('pdfYearSelect').value = '';
+            document.getElementById('pdfTypeSelect').value = '';
+            document.getElementById('pdfSearchResults').style.display = 'none';
+        }
+
+        // 提交反馈
+        function submitFeedback() {
+            const bank = document.getElementById('feedbackBank').value.trim();
+            const year = document.getElementById('feedbackYear').value.trim();
+            const reportType = document.getElementById('feedbackReportType').value.trim();
+            const description = document.getElementById('feedbackDescription').value.trim();
+            const contact = document.getElementById('feedbackContact').value.trim();
+            
+            if (!bank || !year || !reportType || !description) {
+                alert('请填写完整的必填信息！');
+                return;
+            }
+            
+            // 模拟提交
+            const submitBtn = event.target;
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 提交中...';
+            submitBtn.disabled = true;
+            
+            setTimeout(() => {
+                alert('反馈提交成功！我们会在2个工作日内处理您的请求并通过邮箱回复。');
+                clearFeedbackForm();
+                closeModal('feedbackModal');
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            }, 2000);
+        }
+
+        // 清空反馈表单
+        function clearFeedbackForm() {
+            document.getElementById('feedbackBank').value = '';
+            document.getElementById('feedbackYear').value = '';
+            document.getElementById('feedbackReportType').value = '';
+            document.getElementById('feedbackDescription').value = '';
+            document.getElementById('feedbackContact').value = '';
+        }
+
+        // 点击模态框外部关闭
+        window.onclick = function(event) {
+            const reportModal = document.getElementById('reportModal');
+            const pdfModal = document.getElementById('pdfQueryModal');
+            const feedbackModal = document.getElementById('feedbackModal');
+            
+            if (event.target == reportModal) {
+                reportModal.style.display = 'none';
+            } else if (event.target == pdfModal) {
+                pdfModal.style.display = 'none';
+            } else if (event.target == feedbackModal) {
+                feedbackModal.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>
